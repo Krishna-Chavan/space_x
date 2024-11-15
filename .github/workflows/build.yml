@@ -28,23 +28,32 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-        # 4. Install Flutter
+        # 4. Install and Setup Flutter
       - name: Install Flutter
         run: |
           git clone --branch stable https://github.com/flutter/flutter.git
           echo "export PATH=\$PATH:$(pwd)/flutter/bin" >> $GITHUB_ENV
+        shell: bash
+
+      # 5. Verify Flutter Path and Run flutter doctor
+      - name: Verify Flutter Installation
+        run: |
           source $GITHUB_ENV
           flutter doctor
 
-        # 5. Install Flutter Dependencies
+        # 6. Install Flutter Dependencies
       - name: Install Flutter Dependencies
-        run: flutter pub get
+        run: |
+          source $GITHUB_ENV
+          flutter pub get
 
-        # 6. Build APK
+        # 7. Build APK
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          source $GITHUB_ENV
+          flutter build apk --release
 
-        # 7. Upload APK Artifact
+        # 8. Upload APK Artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
