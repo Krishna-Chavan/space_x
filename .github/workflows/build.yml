@@ -28,34 +28,23 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-        # 4. Setup Android SDK
-      - name: Setup Android SDK
-        run: |
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-          mkdir -p $HOME/Android/Sdk/cmdline-tools
-          unzip -q commandlinetools-linux-10406996_latest.zip -d $HOME/Android/Sdk/cmdline-tools
-          mv $HOME/Android/Sdk/cmdline-tools/cmdline-tools $HOME/Android/Sdk/cmdline-tools/latest
-          export ANDROID_HOME=$HOME/Android/Sdk
-          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "cmdline-tools;latest"
-
-        # 5. Setup Flutter
+        # 4. Install Flutter
       - name: Install Flutter
         run: |
           git clone --branch stable https://github.com/flutter/flutter.git
-          export PATH="$PATH:$(pwd)/flutter/bin"
+          echo "export PATH=\$PATH:$(pwd)/flutter/bin" >> $GITHUB_ENV
+          source $GITHUB_ENV
           flutter doctor
 
-        # 6. Install Flutter Dependencies
+        # 5. Install Flutter Dependencies
       - name: Install Flutter Dependencies
         run: flutter pub get
 
-        # 7. Build APK
+        # 6. Build APK
       - name: Build APK
         run: flutter build apk --release
 
-        # 8. Upload APK Artifact
+        # 7. Upload APK Artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
