@@ -11,49 +11,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-        # 1. Checkout Repository
+      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-        # 2. Install Dependencies and Setup Environment
+      # 2. Install Dependencies
       - name: Install Required Packages
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y clang cmake ninja-build libgtk-3-dev unzip wget
+          apt-get update -y > /dev/null
+          apt-get install -y clang cmake ninja-build libgtk-3-dev nano > /dev/null
 
-        # 3. Set Up Java 17
-      - name: Set Up Java 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-        # 4. Install and Setup Flutter
-      - name: Install Flutter
+      # 3. Clone Flutter
+      - name: Clone Flutter
         run: |
-          git clone --branch stable https://github.com/flutter/flutter.git
-          echo "export PATH=\$PATH:$(pwd)/flutter/bin" >> $GITHUB_ENV
-        shell: bash
+          git clone --quiet https://github.com/flutter/flutter.git -b stable
 
-      # 5. Verify Flutter Path and Run flutter doctor
-      - name: Verify Flutter Installation
+      # 4. Set Up Android SDK
+      - name: Set Up Android SDK
         run: |
-          source $GITHUB_ENV
-          flutter doctor
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9862592_latest.zip > /dev/null
+          mkdir -p Android/Sdk
+          unzip -q commandlinetools-linux-9862592_latest.zip -d Android/Sdk
+          export ANDROID_HOME=$(pwd)/Android/Sdk
+          export PATH="$PATH:$ANDROID_HOME:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools"
+          export PATH="$PATH:$(pwd)/flutter/bin"
+          
+          # Accept licenses and install packages
+          yes | sdkmanager --sdk_root=${ANDROID_HOME} "tools" > /dev/null
+          yes | sdkmanager --update --sdk_root=${ANDROID_HOME} > /dev/null
+          sdkmanager --list --sdk_root=${ANDROID_HOME} > /dev/null
+          yes | sdkmanager "platform-tools" "platforms;android-31" "tools" "cmdline-tools;latest" "build-tools;31.0.0" --sdk_root=${ANDROID_HOME} > /dev/null
+          yes | sdkmanager --licenses --sdk_root=${ANDROID_HOME} > /dev/null
 
-        # 6. Install Flutter Dependencies
+      # 5. Install Flutter Dependencies
       - name: Install Flutter Dependencies
         run: |
-          source $GITHUB_ENV
+          export PATH="$PATH:$(pwd)/flutter/bin"
           flutter pub get
 
-        # 7. Build APK
+      # 6. Build APK
       - name: Build APK
         run: |
-          source $GITHUB_ENV
+          export PATH="$PATH:$(pwd)/flutter/bin"
           flutter build apk --release
 
-        # 8. Upload APK Artifact
+      # 7. Upload APK Artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
